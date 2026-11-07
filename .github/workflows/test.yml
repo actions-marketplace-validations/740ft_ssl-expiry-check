@@ -1,0 +1,27 @@
+name: test
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  good:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: ssl
+        uses: ./
+        with:
+          domains: |
+            github.com
+            domaincat.app
+      - run: test "${{ steps.ssl.outputs.failed }}" = "0"
+  bad:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: ssl
+        uses: ./
+        continue-on-error: true
+        with:
+          domains: expired.badssl.com wrong.host.badssl.com self-signed.badssl.com
+      - run: test "${{ steps.ssl.outputs.failed }}" = "3"

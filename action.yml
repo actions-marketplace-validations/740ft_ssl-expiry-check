@@ -1,0 +1,48 @@
+name: 'SSL Certificate Expiry Check'
+description: 'Fail or warn before SSL certificates expire. Checks hostnames and the origin cert behind Cloudflare. No API key, no account.'
+author: 'DomainCat by 740ft'
+branding:
+  icon: 'lock'
+  color: 'purple'
+inputs:
+  domains:
+    description: 'Domains to check, separated by spaces, commas or new lines. Formats: host, host:port, host@origin-ip (check the cert on the server behind Cloudflare), host@origin-ip:port'
+    required: true
+  warn-days:
+    description: 'Warn when a certificate expires within this many days'
+    required: false
+    default: '21'
+  fail-days:
+    description: 'Fail when a certificate expires within this many days'
+    required: false
+    default: '7'
+  fail-on-error:
+    description: 'Fail the step when any check fails (expiring, expired, untrusted, wrong hostname, unreachable). Set to false to only report.'
+    required: false
+    default: 'true'
+  timeout:
+    description: 'Seconds to wait for each TLS connection'
+    required: false
+    default: '15'
+outputs:
+  failed:
+    description: 'Number of domains that failed'
+    value: ${{ steps.check.outputs.failed }}
+  warned:
+    description: 'Number of domains with a warning'
+    value: ${{ steps.check.outputs.warned }}
+  soonest-days:
+    description: 'Days until the soonest certificate expiry'
+    value: ${{ steps.check.outputs.soonest-days }}
+runs:
+  using: 'composite'
+  steps:
+    - id: check
+      shell: bash
+      run: bash "${{ github.action_path }}/check.sh"
+      env:
+        INPUT_DOMAINS: ${{ inputs.domains }}
+        INPUT_WARN_DAYS: ${{ inputs.warn-days }}
+        INPUT_FAIL_DAYS: ${{ inputs.fail-days }}
+        INPUT_FAIL_ON_ERROR: ${{ inputs.fail-on-error }}
+        INPUT_TIMEOUT: ${{ inputs.timeout }}
